@@ -108,7 +108,8 @@ for (ntree_val in ntree_values) {
 }
 
 print(rf_results)
-Best optimized
+
+#Best optimized
 set.seed(7)
 shuffled_data <- data[sample(nrow(data)), ]
 trainIndex <- createDataPartition(shuffled_data$total_event_count, p = 0.8, list = FALSE)
@@ -139,7 +140,7 @@ print(importance_vals)
 
 plot(importance_vals, main = "Variable Importance (Random Forest)")
 
-Each country
+#Each country
 countries <- unique(data_with_country$country)
 
 
@@ -217,6 +218,12 @@ for (cty in all_countries) {
     width = 8, height = 5
   )
 }
+
+#Heatmap all European countries
+library(ggplot2)
+library(tidyverse)
+library(reshape2)
+library(RColorBrewer)
 
 importance_wide <- importance_all %>%
   pivot_wider(names_from = feature, values_from = Overall, values_fill = 0)
