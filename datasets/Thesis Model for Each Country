@@ -1,0 +1,109 @@
+#Each country
+countries <- unique(data_with_country$country)
+
+
+importance_list <- list()
+
+set.seed(7)
+
+for (cty in countries) {
+  cat("Processing country:", cty, "\n")
+  
+  country_data <- data_with_country %>%
+    filter(country == cty) %>%
+    select(-country)
+  
+  if (nrow(country_data) < 30) {
+    cat(" - Skipped (too few rows)\n")
+    next
+  }
+  
+
+  shuffled <- country_data[sample(nrow(country_data)), ]
+  train_idx <- createDataPartition(shuffled$total_event_count, p = 0.8, list = FALSE)
+  train_data <- shuffled[train_idx, ]
+  test_data  <- shuffled[-train_idx, ]
+  
+
+  control <- trainControl(method = "cv", number = 5)
+  tune <- expand.grid(mtry = 1:floor(sqrt(ncol(train_data) - 1)))
+  
+  RF_model <- train(
+    total_event_count ~ .,
+    data = train_data,
+    method = "rf",
+    trControl = control,
+    tuneGrid = tune,
+    ntree = 200
+  )
+
+  importance_vals <- varImp(RF_model, scale = TRUE)
+  importance_df <- as.data.frame(importance_vals$importance)
+  importance_df$feature <- rownames(importance_df)
+  importance_df$country <- cty
+  
+  importance_list[[cty]] <- importance_df
+}
+
+importance_all <- bind_rows(importance_list)
+
+
+
+all_countries <- unique(importance_all$country)
+
+dir.create("country_importance_plots", showWarnings = FALSE)
+
+for (cty in all_countries) {
+  country_plot <- importance_all %>%
+    filter(country == cty) %>%
+    arrange(desc(Overall)) %>%
+    slice_head(n = 5) %>%
+    ggplot(aes(x = reorder(feature, Overall), y = Overall)) +
+    geom_col(fill = "steelblue") +
+    coord_flip() +
+    labs(
+      title = paste("Top 5 Variable Importances -", cty),
+      x = "Feature",
+      y = "Importance"
+    ) +
+    theme_minimal()
+  
+  print(country_plot)
+  
+  ggsave(
+    filename = paste0("country_importance_plots/importance_", gsub(" ", "_", cty), ".png"),
+    plot = country_plot,
+    width = 8, height = 5
+  )
+}
+
+#Heatmap all European countries
+library(ggplot2)
+library(tidyverse)
+library(reshape2)
+library(RColorBrewer)
+
+importance_wide <- importance_all %>%
+  pivot_wider(names_from = feature, values_from = Overall, values_fill = 0)
+
+
+importance_matrix <- as.matrix(importance_wide[,-1])
+rownames(importance_matrix) <- importance_wide$country
+
+heatmap_colors <- colorRampPalette(brewer.pal(9, "YlGnBu"))(100)
+
+png("country_predictor_importance_heatmap.png", width = 1000, height = 800)
+
+heatmap(
+  importance_matrix,
+  Rowv = NA,
+  Colv = NA,
+  col = heatmap_colors,
+  scale = "none",
+  margins = c(8, 12),
+  cexRow = 0.8,
+  cexCol = 0.8,
+  main = "Variable Importance by Country (Random Forest)"
+)
+
+dev.off()
