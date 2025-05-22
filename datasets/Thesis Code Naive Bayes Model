@@ -1,0 +1,45 @@
+library(e1071)
+library(caret)
+library(pander)
+
+data$unrest_level <- cut(data$total_event_count,
+                         breaks = quantile(data$total_event_count, probs = c(0, 0.33, 0.66, 1), na.rm = TRUE),
+                         labels = c("Low", "Medium", "High"),
+                         include.lowest = TRUE)
+
+
+frqtab <- function(x, caption) {
+  round(100 * prop.table(table(x)), 1)
+}
+pander(frqtab(data$unrest_level), caption = "Frequency of Civil Unrest Levels")
+
+
+set.seed(123)
+train_index <- createDataPartition(data$unrest_level, p = 0.8, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+predictors <- train_data[, !(names(train_data) %in% c("total_event_count", "unrest_level", "year"))]
+
+
+train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 1, verboseIter = TRUE)
+
+
+set.seed(123)
+nb_model <- train(x = predictors,
+                  y = train_data$unrest_level,
+                  method = "nb",
+                  trControl = train_control)
+
+print(nb_model)
+
+
+nb_predictions <- predict(nb_model, newdata = test_data)
+
+
+conf_matrix <- confusionMatrix(nb_predictions, test_data$unrest_level)
+print(conf_matrix)
+
+
+misclass_rate <- 1 - sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
+cat("Misclassification rate:", round(misclass_rate * 100, 2), "%\n")
