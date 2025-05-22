@@ -7,14 +7,9 @@ library(dplyr)
 library(lubridate)
 library(stringr)
 
-main_data <- read_csv("Main_Data.csv")
-trust_data <- Trust
-unemployment_data <- Unemployment_data
-
-
-main_data <- read_csv("Main_Data.csv")
-trust_data <- Trust
-unemployment_data <- Unemployment_data
+main_data <- read_csv("Main_Data.csv") #https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/U1EOXE
+trust_data <- Trust #https://www.oecd.org/en/publications/society-at-a-glance-2024_918d8db3-en/full-report/trust-in-public-institutions_f4af755c.html filter 2020-2021
+unemployment_data <- Unemployment_data #https://ec.europa.eu/eurostat/databrowser/view/une_rt_m__custom_16447558/default/table?lang=en
 
 main_monthly <- main_data %>%
   group_by(country, year, Month) %>%
