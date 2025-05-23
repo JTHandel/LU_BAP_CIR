@@ -78,32 +78,28 @@ for (cty in all_countries) {
 }
 
 #Heatmap all European countries
-library(ggplot2)
 library(tidyverse)
-library(reshape2)
+library(pheatmap) 
 library(RColorBrewer)
 
 importance_wide <- importance_all %>%
   pivot_wider(names_from = feature, values_from = Overall, values_fill = 0)
-
 
 importance_matrix <- as.matrix(importance_wide[,-1])
 rownames(importance_matrix) <- importance_wide$country
 
 heatmap_colors <- colorRampPalette(brewer.pal(9, "YlGnBu"))(100)
 
-png("country_predictor_importance_heatmap.png", width = 1000, height = 800)
-
-heatmap(
+pheatmap(
   importance_matrix,
-  Rowv = NA,
-  Colv = NA,
-  col = heatmap_colors,
-  scale = "none",
-  margins = c(8, 12),
-  cexRow = 0.8,
-  cexCol = 0.8,
-  main = "Variable Importance by Country (Random Forest)"
+  color = heatmap_colors,
+  fontsize_row = 15,
+  fontsize_col = 10,
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  main = "Variable Importance by Country (Random Forest)",
+  border_color = NA,
+  filename = "country_predictor_importance_heatmap.png",
+  width = 10,
+  height = 8
 )
-
-dev.off()
