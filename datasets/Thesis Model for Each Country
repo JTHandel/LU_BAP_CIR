@@ -94,7 +94,7 @@ pheatmap(
   importance_matrix,
   color = heatmap_colors,
   fontsize_row = 15,
-  fontsize_col = 10,
+  fontsize_col = 12,
   cluster_rows = TRUE,
   cluster_cols = TRUE,
   main = "Variable Importance by Country (Random Forest)",
